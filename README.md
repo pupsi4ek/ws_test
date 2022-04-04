@@ -1,5 +1,10 @@
 # ws_test
 
+## First of all run WebSocket Server
+```
+node ./WebSocketServer/server
+```
+
 ## Project setup
 ```
 npm install
