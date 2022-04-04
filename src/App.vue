@@ -1,26 +1,78 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="app">
+    <NavBar />
+    <div class="container"><router-view /></div>
+    <Footer />
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import NavBar from '@/components/NavBar.vue';
+import Footer from '@/components/Footer.vue';
+import { uuid } from 'vue-uuid';
+import ws from './services/ws';
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
-  }
-}
+    NavBar,
+    Footer,
+  },
+  data() {
+    return {
+      ws: ws,
+      uuid: uuid.v4(),
+    };
+  },
+  computed: {
+    current_uuid() {
+      return this.$store.state.uuid;
+    },
+    messages() {
+      return this.$store.state.messages;
+    },
+  },
+  created() {
+    this.$store.commit('setUUID', uuid.v4());
+    console.log('Starting ws to WebSocket Server');
+
+    this.ws.onmessage = (event) => {
+      this.$store.commit('addMessage', event.data);
+      let message = JSON.parse(event.data);
+      if (message.message === 'welcome') {
+        if (message.id) {
+          if (message.id != this.current_uuid) {
+            this.$store.commit('setAccess', false);
+          } else this.$store.commit('setAccess', true);
+        } else this.$store.commit('setAccess', true);
+      }
+    };
+
+    this.ws.onopen = (event) => {
+      console.log(event);
+      console.log('Successfully connected to the echo websocket server...');
+    };
+  },
+};
 </script>
 
 <style>
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+h1 {
+  margin: 0;
+}
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.container {
+  margin: 0 3vw;
+  min-height: 75%;
+  margin-bottom: -50px;
 }
 </style>
